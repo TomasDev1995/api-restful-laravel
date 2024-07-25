@@ -1,5 +1,5 @@
 # Usa la imagen base de PHP con Apache
-FROM php:7.4-apache
+FROM php:8.1-apache
 
 # Instalar dependencias necesarias y oniguruma
 RUN apt-get update && apt-get install -y \
@@ -11,6 +11,10 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     && rm -rf /var/lib/apt/lists/*
+
+# Instalar la extensión de MongoDB
+RUN pecl install mongodb \
+    && docker-php-ext-enable mongodb
 
 # Habilita los módulos de Apache y PHP necesarios
 RUN a2enmod rewrite ssl \

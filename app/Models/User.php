@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 
-class User extends Authenticatable
+class User extends Eloquent
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use \Illuminate\Foundation\Auth\Access\Authorizable, \Illuminate\Contracts\Auth\MustVerifyEmail;
+
+    protected $connection = 'mongodb';
+    protected $collection = 'users';
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +17,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'name', 'email', 'password', 'role', 'phone', 'address', 'date_of_birth', 'profile_picture', 'bio'
     ];
 
     /**
@@ -30,7 +27,6 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
     /**
@@ -39,6 +35,17 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'date_of_birth' => 'datetime',
     ];
+
+    /**
+     * Get the user's password attribute.
+     *
+     * @param string $password
+     * @return string
+     */
+    public function getPasswordAttribute($password)
+    {
+        return $password;
+    }
 }
