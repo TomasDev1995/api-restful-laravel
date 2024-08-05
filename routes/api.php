@@ -2,6 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\User\UserController as V1UserController;
+use App\Http\Controllers\Task\TaskController as V1TaskController;
+use App\Http\Controllers\Authentication\AuthenticationController as V1AuthenticationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +17,27 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::prefix('v1')->group(function () {
+    // Rutas de autenticación
+    Route::post('/register', [V1AuthenticationController::class, 'register']);
+    Route::post('/login', [V1AuthenticationController::class, 'login']);
+    Route::post('/logout', [V1AuthenticationController::class, 'logout']);
+
+    Route::middleware('auth:api')->group(function () {
+        Route::prefix('users')->group(function () {
+            Route::get('/', [V1UserController::class, 'index']);
+            Route::get('/{id}', [V1UserController::class, 'show']);
+            Route::post('/', [V1UserController::class, 'store']);
+            Route::put('/{id}', [V1UserController::class, 'update']);
+            Route::delete('/{id}', [V1UserController::class, 'destroy']);
+        });
+
+        Route::prefix('tasks')->group(function () {
+            Route::get('/', [V1TaskController::class, 'index']);
+            Route::get('/{id}', [V1TaskController::class, 'show']);
+            Route::post('/', [V1TaskController::class, 'store']);
+            Route::put('/{id}', [V1TaskController::class, 'update']);
+            Route::delete('/{id}', [V1TaskController::class, 'destroy']);
+        });
+    });
 });

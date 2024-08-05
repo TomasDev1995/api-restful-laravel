@@ -2,9 +2,10 @@ db = db.getSiblingDB('dicromo_db');
 
 // Crear colección de usuarios con campos detallados
 db.createCollection('users');
-db.users.insertMany([
+
+// Insertar usuarios y obtener los ObjectId generados
+const users = [
   {
-    _id: ObjectId(),
     name: "Tomas Aguilera",
     email: "tomas@example.com",
     password: "hashed_password",  // Utiliza una función hash en tu aplicación
@@ -22,7 +23,6 @@ db.users.insertMany([
     updated_at: new Date()
   },
   {
-    _id: ObjectId(),
     name: "Maria Gonzalez",
     email: "maria@example.com",
     password: "hashed_password",
@@ -39,14 +39,15 @@ db.users.insertMany([
     created_at: new Date(),
     updated_at: new Date()
   }
-]);
+];
+
+const userIds = db.users.insertMany(users).insertedIds;
 
 // Crear colección de tareas con campos detallados
 db.createCollection('tasks');
 db.tasks.insertMany([
   {
-    _id: ObjectId(),
-    user_id: ObjectId("..."),  // Reemplaza con un ObjectId de un usuario existente
+    user_id: userIds[0],  // Usar ObjectId del primer usuario
     title: "Primera Tarea",
     description: "Descripción de la primera tarea",
     status: "pending",
@@ -64,8 +65,7 @@ db.tasks.insertMany([
     updated_at: new Date()
   },
   {
-    _id: ObjectId(),
-    user_id: ObjectId("..."),  // Reemplaza con un ObjectId de un usuario existente
+    user_id: userIds[1],  // Usar ObjectId del segundo usuario
     title: "Segunda Tarea",
     description: "Descripción de la segunda tarea",
     status: "completed",
@@ -84,9 +84,9 @@ db.tasks.insertMany([
   }
 ]);
 
-// Crear un usuario de base de datos sin roles
+// Crear un usuario de base de datos con roles
 db.createUser({
-  user: "admin",
-  pwd: "adminpassword",
+  user: "dicromo",
+  pwd: "d1cr0m0",
   roles: [{ role: "readWrite", db: "dicromo_db" }]
 });

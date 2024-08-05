@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar la extensión de MongoDB
