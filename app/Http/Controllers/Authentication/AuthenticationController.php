@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Authentication;
 
+use App\DTO\User\UserDTO;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\Authentication\LoginRequest;
@@ -12,25 +13,47 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Services\User\UserService;
 use App\Http\Resources\User\UserResource;
-
+use App\Services\Authentication\AuthenticationService;
+use DateTime;
+use Illuminate\Support\Facades\Log;
+use PhpParser\Node\Stmt\TryCatch;
 
 class AuthenticationController extends Controller
 {
-    protected $userService;
+    protected $authenticationService;
 
-    public function __construct(UserService $userService)
+    public function __construct(AuthenticationService $authenticationService)
     {
-        $this->userService = $userService;
+        $this->authenticationService = $authenticationService;
     }
 
     // Registro de usuario
     public function register(RegisterRequest $registerRequest)
     {
-        $data = $registerRequest->validated();
-       
-        $user = $this->userService->registerUser($data);
+        try {
+            $data = $registerRequest->validated();
 
-        return (new UserResource($user))->response()->setStatusCode(201);
+            $userDTO = new UserDTO(
+                $data['name'] ?? null,
+                $data['email'] ?? null,
+                $data['password'] ?? null,
+                $data['phone'] ?? null,
+                $data['address'] ?? null,
+                isset($data['date_of_birth']) ? new \DateTime($data['date_of_birth']) : null,
+                $data['profile_picture'] ?? null,
+                $data['bio'] ?? null,
+                now()->format('d-m-Y H:i:s'),
+                now()->format('d-m-Y H:i:s')
+            );
+
+            $this->authenticationService->registerUser($userDTO);
+        
+            return (new UserResource($userDTO))->response()->setStatusCode(201);
+        } catch (\Exception $e) {
+            Log::error("Error en el registro de usuario: " . $e->getMessage() . " - Datos recibidos: " . json_encode($registerRequest->all()));
+            return response()->json(['error' => 'Registro fallido, por favor intente nuevamente.'], 500);
+        }
+
     }
 
     // // Inicio de sesión

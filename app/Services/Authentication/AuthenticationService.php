@@ -2,7 +2,7 @@
 
 // app/Services/UserService.php
 
-namespace App\Services\User;
+namespace App\Services\Authentication;
 
 use MongoDB\Client as MongoClient;
 use Illuminate\Support\Facades\Hash;
@@ -11,7 +11,7 @@ use App\DTO\User\UserDTO;
 use Illuminate\Support\Facades\Log;
 use MongoDB\BSON\UTCDateTime;
 
-class UserService
+class AuthenticationService
 {
     protected $client;
     protected $collection;
@@ -39,7 +39,6 @@ class UserService
 
         try {
             $this->userRepository->create($userData);
-            
             return $userDTO;
         } catch (\Exception $e) {
             // Manejo de errores

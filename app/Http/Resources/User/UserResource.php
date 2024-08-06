@@ -20,11 +20,11 @@ class UserResource extends JsonResource
             'password' => $this->password,
             'phone' => $this->phone,
             'address' => $this->address,
-            'date_of_birth' => $this->date_of_birth ? $this->date_of_birth->toDateString() : null,
+            'date_of_birth' => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
             'profile_picture' => $this->profile_picture,
             'bio' => $this->bio,
-            'created_at' => $this->created_at ?? null,
-            'updated_at' => $this->updated_at ?? null,
+            'created_at' => $this->created_at ? $this->created_at : null,
+            'updated_at' => $this->updated_at ? $this->updated_at : null,
         ];
     }
 }
