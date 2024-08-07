@@ -3,8 +3,11 @@
 namespace App\Repositories\User;
 
 use App\DTO\User\UserDTO;
+use App\Models\User;
 use App\Services\Database\MongoDBConnectionService;
 use DateTime;
+use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use MongoDB\BSON\ObjectId;
 
@@ -21,14 +24,34 @@ class UserRepository
     public function create(array $userData)
     {
         try {
-            $result = $this->collection->insertOne($userData);
-            return $result->getInsertedId();
+            $this->collection->insertOne($userData);
         } catch (\Exception $e) {
             Log::error('Error al insertar el usuario', [
                 'error' => $e->getMessage(),
                 'user_data' => $userData
             ]);
             throw new \Exception("Error al insertar el usuario: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Encuentra un usuario por su email.
+     *
+     * @param string $email
+     * @return User|null
+     */
+    public function findByEmail(string $email): ?User
+    {
+        try {
+            $user = $this->collection->findOne(['email' => $email]);
+
+            if (!$user instanceof User) {
+                return null;
+            }
+
+            return new User;
+        } catch (Exception $e) {
+            throw new \RuntimeException('Error al buscar el usuario: ' . $e->getMessage());
         }
     }
 

@@ -40,4 +40,12 @@ class UserDTO
         $this->created_at = $created_at;
         $this->updated_at = $updated_at;
     }
+
+    public static function fromLoginData(string $email, string $password): self
+    {
+        return new self(
+            $email,
+            $password
+        );
+    }
 }

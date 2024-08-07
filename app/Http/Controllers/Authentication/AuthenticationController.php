@@ -2,21 +2,14 @@
 
 namespace App\Http\Controllers\Authentication;
 
+use App\Contracts\ValidatesRequestInterface;
 use App\DTO\User\UserDTO;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Http\Requests\Authentication\LoginRequest;
 use App\Http\Requests\Authentication\RegisterRequest;
-use MongoDB\Client as MongoClient;
-use Illuminate\Support\Facades\Hash;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use App\Services\User\UserService;
 use App\Http\Resources\User\UserResource;
 use App\Services\Authentication\AuthenticationService;
-use DateTime;
 use Illuminate\Support\Facades\Log;
-use PhpParser\Node\Stmt\TryCatch;
 
 class AuthenticationController extends Controller
 {
@@ -31,69 +24,58 @@ class AuthenticationController extends Controller
     public function register(RegisterRequest $registerRequest)
     {
         try {
-            $data = $registerRequest->validated();
-
-            $userDTO = new UserDTO(
-                $data['name'] ?? null,
-                $data['email'] ?? null,
-                $data['password'] ?? null,
-                $data['phone'] ?? null,
-                $data['address'] ?? null,
-                isset($data['date_of_birth']) ? new \DateTime($data['date_of_birth']) : null,
-                $data['profile_picture'] ?? null,
-                $data['bio'] ?? null,
-                now()->format('d-m-Y H:i:s'),
-                now()->format('d-m-Y H:i:s')
-            );
-
+            $data = $this->extractValidatedData($registerRequest);
+            $userDTO = $this->createUserDTO($data);
             $this->authenticationService->registerUser($userDTO);
-        
-            return (new UserResource($userDTO))->response()->setStatusCode(201);
+            return $this->successResponse($userDTO);
         } catch (\Exception $e) {
-            Log::error("Error en el registro de usuario: " . $e->getMessage() . " - Datos recibidos: " . json_encode($registerRequest->all()));
-            return response()->json(['error' => 'Registro fallido, por favor intente nuevamente.'], 500);
+            return $this->handleAuthenticationException($e, $registerRequest);
         }
-
+    }
+    
+    public function login(LoginRequest $loginRequest)
+    {
+        try {
+            $data = $loginRequest->validated();
+            $userDTO = UserDTO::fromLoginData($data['email'], $data['password']);
+            $this->authenticationService->login($userDTO);
+        } catch (\Exception $e) {
+            return $this->handleRegistrationException($e, $loginRequest);
+        }
     }
 
-    // // Inicio de sesión
-    // public function login(LoginRequest $loginRequest)
-    // {
-    //     $loginRequest->validate([
-    //         'email' => 'required|string|email',
-    //         'password' => 'required|string',
-    //     ]);
+    private function extractValidatedData(ValidatesRequestInterface $request): array
+    {
+        return $request->validated();
+    }
 
-    //     $user = $this->collection->findOne(['email' => $loginRequest->email]);
+    private function createUserDTO(array $data): UserDTO
+    {
+        return new UserDTO(
+            $data['name'] ?? null,
+            $data['email'] ?? null,
+            $data['password'] ?? null,
+            $data['phone'] ?? null,
+            $data['address'] ?? null,
+            $data['date_of_birth'] ?? null,
+            $data['profile_picture'] ?? null,
+            $data['bio'] ?? null,
+            now()->format('d-m-Y H:i:s'),
+            now()->format('d-m-Y H:i:s')
+        );
+    }
 
-    //     if (!$user || !Hash::check($loginRequest->password, $user['password'])) {
-    //         return response()->json(['message' => 'Invalid credentials'], 401);
-    //     }
+    private function handleAuthenticationException(\Exception $e, RegisterRequest $registerRequest)
+    {
+        Log::error("Error en el registro de usuario: " . $e->getMessage() . " - Datos recibidos: " . json_encode($registerRequest->all()));
+        return response()->json(['error' => 'Registro fallido, por favor intente nuevamente.'], 500);
+    }
 
-    //     try {
-    //         // Crear un token JWT
-    //         $token = JWTAuth::fromUser($user);
-    //         return response()->json([
-    //             'message' => 'Login successful',
-    //             'token' => $token
-    //         ]);
-    //     } catch (JWTException $e) {
-    //         return response()->json(['message' => 'Could not create token'], 500);
-    //     }
-    // }
-
-    // // Logout
-    // public function logout(Request $request)
-    // {
-    //     $request->validate([
-    //         'token' => 'required|string',
-    //     ]);
-
-    //     try {
-    //         JWTAuth::invalidate($request->token);
-    //         return response()->json(['message' => 'Logout successful']);
-    //     } catch (JWTException $e) {
-    //         return response()->json(['message' => 'Token invalidation failed'], 500);
-    //     }
-    // }
+    private function successResponse(UserDTO $userDTO)
+    {
+        return response()->json([
+            'message' => 'Usuario registrado correctamente',
+            'data' => new UserResource($userDTO)
+        ], 201);
+    }
 }

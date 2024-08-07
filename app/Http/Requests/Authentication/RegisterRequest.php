@@ -3,8 +3,9 @@
 namespace App\Http\Requests\Authentication;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Contracts\ValidatesRequestInterface;
 
-class RegisterRequest extends FormRequest
+class RegisterRequest extends FormRequest implements ValidatesRequestInterface
 {
     public function authorize()
     {
