@@ -21,7 +21,6 @@ Route::prefix('v1')->group(function () {
     // Rutas de autenticación
     Route::post('/register', [V1AuthenticationController::class, 'register']);
     Route::post('/login', [V1AuthenticationController::class, 'login']);
-    Route::post('/logout', [V1AuthenticationController::class, 'logout']);
 
     Route::middleware('auth:api')->group(function () {
         Route::prefix('users')->group(function () {
@@ -39,5 +38,7 @@ Route::prefix('v1')->group(function () {
             Route::put('/{id}', [V1TaskController::class, 'update']);
             Route::delete('/{id}', [V1TaskController::class, 'destroy']);
         });
+        
+        Route::post('/logout', [V1AuthenticationController::class, 'logout']);
     });
 });

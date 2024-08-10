@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Services\Database\MongoDBConnectionService;
 use Illuminate\Http\Request;
 use MongoDB\Client as MongoClient;
 
@@ -11,15 +12,19 @@ class UserController extends Controller
     protected $client;
     protected $collection;
 
-    public function __construct()
+    public function __construct(MongoDBConnectionService $mongoDBConnectionService)
     {
-        $this->client = new MongoClient('mongodb://dicromo:adminpassword@localhost:27017');
-        $this->collection = $this->client->dicromo_Db->users;
+        $this->collection = $mongoDBConnectionService->getCollection('users');
     }
 
     public function index()
     {
-        $users = $this->collection->find()->toArray();
+        $usersCursor = $this->collection->find();
+        
+        // Convertir el cursor a un array
+        $users = $usersCursor->toArray();
+        
+        // Devolver la respuesta JSON
         return response()->json($users);
     }
 
