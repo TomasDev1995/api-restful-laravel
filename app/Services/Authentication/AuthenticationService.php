@@ -38,7 +38,9 @@ class AuthenticationService
         try {
             $user = $this->findUserByEmail($userDTO->email);
             $this->verifyPassword($userDTO->password, $user->password);
-            return $this->generateToken($userDTO);
+            return [
+                "accessToken"=> $this->generateToken($userDTO),
+            ];
         } catch (LoginException $e) {
            return $this->handleLoginError($e);
         }
