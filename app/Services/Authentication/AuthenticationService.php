@@ -10,13 +10,8 @@ use App\DTO\User\UserDTO;
 use App\Exceptions\Authentication\RegistrationException;
 use App\Exceptions\Authentication\LoginException;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Ramsey\Uuid\Uuid;
-use Tymon\JWTAuth\Claims\Collection as ClaimsCollection;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Payload;
-use Tymon\JWTAuth\Validators\PayloadValidator;
 
 class AuthenticationService
 {
@@ -32,11 +27,9 @@ class AuthenticationService
     public function registerUser(UserDTO $userDTO)
     {
         try {
-            $userData = $this->mapUserDTOToDataArray($userDTO);
-            $this->createUser($userData);
-            return $userDTO;
+            return $this->createUser($this->mapUserDTOToDataArray($userDTO)); 
         } catch (RegistrationException $e) {
-            $this->handleRegistrationError($e);
+            return $this->handleRegistrationError($e);
         }
     }
 
@@ -45,11 +38,9 @@ class AuthenticationService
         try {
             $user = $this->findUserByEmail($userDTO->email);
             $this->verifyPassword($userDTO->password, $user->password);
-            $token = $this->generateToken($userDTO);
-
             return [
                 'message' => 'Login exitoso',
-                'token' => $token
+                'token' => $this->generateToken($userDTO)
             ];
         } catch (LoginException $e) {
            return $this->handleLoginError($e);
@@ -99,14 +90,12 @@ class AuthenticationService
         return [
             'name' => $userDTO->name,
             'email' => $userDTO->email,
-            'password' => $this->passwordHasher->hash($userDTO->password),
             'phone' => $userDTO->phone,
             'address' => $userDTO->address,
             'date_of_birth' => $userDTO->date_of_birth,
             'profile_picture' => $userDTO->profile_picture,
             'bio' => $userDTO->bio,
             'created_at' => $userDTO->created_at,
-            'updated_at' => $userDTO->updated_at,
         ];
     }
 
