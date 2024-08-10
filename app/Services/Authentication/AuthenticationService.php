@@ -45,7 +45,7 @@ class AuthenticationService
         try {
             $user = $this->findUserByEmail($userDTO->email);
             $this->verifyPassword($userDTO->password, $user->password);
-            $token = $this->generateToken($user);
+            $token = $this->generateToken($userDTO);
 
             return [
                 'message' => 'Login exitoso',
@@ -78,19 +78,19 @@ class AuthenticationService
         return $validated;
     }
 
-    private function generateToken(User $user): string
+    private function generateToken(UserDTO $userDTO): string
     {
-        $credentials = ["email"=>$user->email, "password"=>$user->password];
+        $credentials = ["email"=>$userDTO->email, "password"=>$userDTO->password];
 
         if (!$token = JWTAuth::attempt($credentials)) {
             Log::error("Error al generar token de acceso");
             throw new LoginException("Error al generar token de acceso");
         }
-
+        
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
+            'expires_in' => auth()->factory()->getTTL() * 30
         ]); 
     }
 
