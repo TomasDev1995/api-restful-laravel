@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Authentication;
 
 use App\Contracts\ValidatesRequestInterface;
 use App\DTO\User\UserDTO;
+use App\Exceptions\Authentication\LoginException;
+use App\Exceptions\Authentication\RegistrationException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Authentication\LoginRequest;
 use App\Http\Requests\Authentication\RegisterRequest;
@@ -17,10 +19,10 @@ class AuthenticationController extends Controller
 
     public function __construct(AuthenticationService $authenticationService)
     {
+        $this->middleware('auth:api', ['except' => ['login', 'register']]);
         $this->authenticationService = $authenticationService;
     }
 
-    // Registro de usuario
     public function register(RegisterRequest $registerRequest)
     {
         try {
@@ -28,8 +30,8 @@ class AuthenticationController extends Controller
             $userDTO = $this->createUserDTO($data);
             $this->authenticationService->registerUser($userDTO);
             return $this->successResponse($userDTO);
-        } catch (\Exception $e) {
-            return $this->handleAuthenticationException($e, $registerRequest);
+        } catch (RegistrationException $e) {
+            return $this->handleRegistrationException($e, $registerRequest);
         }
     }
     
@@ -38,9 +40,9 @@ class AuthenticationController extends Controller
         try {
             $data = $loginRequest->validated();
             $userDTO = UserDTO::fromLoginData($data['email'], $data['password']);
-            $this->authenticationService->login($userDTO);
-        } catch (\Exception $e) {
-            return $this->handleRegistrationException($e, $loginRequest);
+            return $this->authenticationService->loginUser($userDTO);
+        } catch (LoginException $e) {
+            return $this->handleLoginException($e, $loginRequest);
         }
     }
 
@@ -65,10 +67,16 @@ class AuthenticationController extends Controller
         );
     }
 
-    private function handleAuthenticationException(\Exception $e, RegisterRequest $registerRequest)
+    private function handleRegistrationException(RegistrationException $e)
     {
-        Log::error("Error en el registro de usuario: " . $e->getMessage() . " - Datos recibidos: " . json_encode($registerRequest->all()));
+        Log::error("Error en el registro de usuario: " . $e->getMessage());
         return response()->json(['error' => 'Registro fallido, por favor intente nuevamente.'], 500);
+    }
+
+    private function handleLoginException(LoginException $e)
+    {
+        Log::error("Error en el inicio de sesion del usuario: " . $e->getMessage());
+        return response()->json(['error' => 'Inicio de sesion fallido, por favor intente nuevamente.'], 500);
     }
 
     private function successResponse(UserDTO $userDTO)

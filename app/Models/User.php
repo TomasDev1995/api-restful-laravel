@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
+use Jenssegers\Mongodb\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Eloquent
+class User extends Authenticatable implements JWTSubject
 {
-    use \Illuminate\Foundation\Auth\Access\Authorizable, \Illuminate\Contracts\Auth\MustVerifyEmail;
-
+    use HasApiTokens, HasFactory, Notifiable;
+    
     protected $connection = 'mongodb';
     protected $collection = 'users';
 
@@ -47,5 +51,15 @@ class User extends Eloquent
     public function getPasswordAttribute($password)
     {
         return $password;
+    }
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }

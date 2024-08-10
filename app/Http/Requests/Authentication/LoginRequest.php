@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Authentication;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Contracts\ValidatesRequest;
 use App\Contracts\ValidatesRequestInterface;
 
 class LoginRequest extends FormRequest implements ValidatesRequestInterface
@@ -27,5 +26,15 @@ class LoginRequest extends FormRequest implements ValidatesRequestInterface
             'email.required' => 'El correo electrónico es obligatorio.',
             'password.required' => 'La contraseña es obligatoria.',
         ];
+    }
+
+    /**
+     * Get the validated data from the request.
+     *
+     * @return array
+     */
+    public function validated(): array
+    {
+        return $this->validator->validated();
     }
 }

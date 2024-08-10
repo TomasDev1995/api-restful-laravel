@@ -50,4 +50,14 @@ class RegisterRequest extends FormRequest implements ValidatesRequestInterface
             'bio.nullable' => 'El campo biografía es opcional.',
         ];
     }
+
+    /**
+     * Get the validated data from the request.
+     *
+     * @return array
+     */
+    public function validated(): array
+    {
+        return $this->validator->validated();
+    }
 }

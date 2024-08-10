@@ -7,11 +7,16 @@ namespace App\Services\Authentication;
 use App\Repositories\User\UserRepository;
 use App\Services\Security\PasswordHasher;
 use App\DTO\User\UserDTO;
-use App\Exceptions\Authentication\AuthenticationException;
+use App\Exceptions\Authentication\RegistrationException;
+use App\Exceptions\Authentication\LoginException;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Tymon\JWTAuth\Exceptions\JWTException;
+use Ramsey\Uuid\Uuid;
+use Tymon\JWTAuth\Claims\Collection as ClaimsCollection;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Payload;
+use Tymon\JWTAuth\Validators\PayloadValidator;
 
 class AuthenticationService
 {
@@ -30,63 +35,63 @@ class AuthenticationService
             $userData = $this->mapUserDTOToDataArray($userDTO);
             $this->createUser($userData);
             return $userDTO;
-        } catch (\RuntimeException $e) {
+        } catch (RegistrationException $e) {
             $this->handleRegistrationError($e);
-        } catch (\Exception $e) {
-            // En caso de que ocurra algún otro tipo de error inesperado
-            $this->handleUnexpectedError($e);
         }
     }
 
-    public function login(UserDTO $userDTO): array
+    public function loginUser(UserDTO $userDTO)
     {
         try {
             $user = $this->findUserByEmail($userDTO->email);
-            $this->verifyPassword($userDTO->password, $user['password']);
+            $this->verifyPassword($userDTO->password, $user->password);
             $token = $this->generateToken($user);
-            
+
             return [
                 'message' => 'Login exitoso',
                 'token' => $token
             ];
-        } catch (\RuntimeException $e) {
-            $this->handleAuthenticationError($e);
-        } catch (\Exception $e) {
-            $this->handleUnexpectedError($e);
+        } catch (LoginException $e) {
+           return $this->handleLoginError($e);
         }
     }
 
-    private function findUserByEmail(string $email): User
+    private function findUserByEmail(string $email): User|null
     {
         $user = $this->userRepository->findByEmail($email);
-        if (!$user) {
-            throw new \RuntimeException('Usuario no encontrado');
+        if(!$user){
+            Log::error("Usuario no encontrado: $email");
+            throw new LoginException('Usuario no encontrado');
         }
+
         return $user;
     }
 
-    private function verifyPassword(string $password, string $hashedPassword): void
+    private function verifyPassword(string $password, string $hashedPassword): bool
     {
-        if (!$this->passwordHasher->check($password, $hashedPassword)) {
-            throw new \RuntimeException('Contraseña incorrecta');
+        $validated = $this->passwordHasher->check($password, $hashedPassword);
+        if(!$validated){
+            Log::error("Contraseña incorrecta.");
+            throw new LoginException('Contraseña incorrecta');
         }
+        
+        return $validated;
     }
 
     private function generateToken(User $user): string
     {
-        try {
-            // Genera el token para el usuario autenticado
-            return JWTAuth::fromUser($user);
-        } catch (JWTException $e) {
-            Log::error("Error al generar el token JWT: " . $e->getMessage());
-            throw new \RuntimeException("No se pudo generar el token JWT. Inténtelo de nuevo.");
-        }
-    }
+        $credentials = ["email"=>$user->email, "password"=>$user->password];
 
-    private function handleAuthenticationError(\RuntimeException $e): void
-    {
-        Log::warning("Error en la autenticación: " . $e->getMessage());
-        throw new AuthenticationException("Autenticación fallida. Verifique sus credenciales e intente nuevamente.", 0, $e);
+        if (!$token = JWTAuth::attempt($credentials)) {
+            Log::error("Error al generar token de acceso");
+            throw new LoginException("Error al generar token de acceso");
+        }
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth()->factory()->getTTL() * 60
+        ]); 
     }
 
     private function mapUserDTOToDataArray(UserDTO $userDTO)
@@ -104,21 +109,21 @@ class AuthenticationService
             'updated_at' => $userDTO->updated_at,
         ];
     }
-    
+
     private function createUser(array $userData): void
     {
         $this->userRepository->create($userData);
     }
 
-    private function handleRegistrationError(\RuntimeException $e): void
+    private function handleRegistrationError(RegistrationException $e): void
     {
         Log::error("Error al registrar el usuario: " . $e->getMessage());
-        throw new AuthenticationException("No se pudo registrar el usuario, por favor intente nuevamente.", 0, $e);
+        throw new RegistrationException("No se pudo registrar el usuario, por favor intente nuevamente.", 0, $e);
     }
 
-    private function handleUnexpectedError(\Exception $e): void
+    private function handleLoginError(LoginException $e): array
     {
-        Log::critical("Error inesperado: " . $e->getMessage());
-        throw new \RuntimeException("Ha ocurrido un error inesperado. Por favor, intente más tarde.");
+        Log::error("Error de autenticacion: " . $e->getMessage());
+        return ['error' => $e->getMessage()];
     }
 }

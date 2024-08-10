@@ -44,6 +44,7 @@ class UserDTO
     public static function fromLoginData(string $email, string $password): self
     {
         return new self(
+            null,
             $email,
             $password
         );
