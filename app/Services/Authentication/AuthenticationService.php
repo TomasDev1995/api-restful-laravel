@@ -38,10 +38,7 @@ class AuthenticationService
         try {
             $user = $this->findUserByEmail($userDTO->email);
             $this->verifyPassword($userDTO->password, $user->password);
-            return [
-                'message' => 'Login exitoso',
-                'token' => $this->generateToken($userDTO)
-            ];
+            return $this->generateToken($userDTO);
         } catch (LoginException $e) {
            return $this->handleLoginError($e);
         }
@@ -78,11 +75,7 @@ class AuthenticationService
             throw new LoginException("Error al generar token de acceso");
         }
         
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 30
-        ]); 
+        return $token; 
     }
 
     private function mapUserDTOToDataArray(UserDTO $userDTO)
