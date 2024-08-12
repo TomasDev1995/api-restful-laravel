@@ -15,3 +15,4 @@ yarn-error.log
 /.vscode
 docker/apache/ssl
 docker-compose.yml
+php
