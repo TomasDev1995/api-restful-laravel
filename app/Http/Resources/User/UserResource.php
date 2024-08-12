@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Resources\User;
 
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,14 +16,12 @@ class UserResource extends JsonResource
         return [
             'name' => $this->name,
             'email' => $this->email,
-            'password' => $this->password,
             'phone' => $this->phone,
             'address' => $this->address,
-            'date_of_birth' => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
+            'date_of_birth' => $this->date_of_birth,
             'profile_picture' => $this->profile_picture,
             'bio' => $this->bio,
-            'created_at' => $this->created_at ? $this->created_at : null,
-            'updated_at' => $this->updated_at ? $this->updated_at : null,
+            'created_at' => $this->created_at,
         ];
     }
 }

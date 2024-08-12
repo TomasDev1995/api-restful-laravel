@@ -27,7 +27,7 @@ class AuthenticationService
     public function registerUser(UserDTO $userDTO)
     {
         try {
-            return $this->createUser($this->mapUserDTOToDataArray($userDTO)); 
+            return $this->createUser($userDTO); 
         } catch (RegistrationException $e) {
             return $this->handleRegistrationError($e);
         }
@@ -36,7 +36,7 @@ class AuthenticationService
     public function loginUser(UserDTO $userDTO)
     {
         try {
-            $user = $this->findUserByEmail($userDTO->email);
+            $user = $this->findUserByEmail($userDTO);
             $this->verifyPassword($userDTO->password, $user->password);
             return [
                 "accessToken"=> $this->generateToken($userDTO),
@@ -46,11 +46,11 @@ class AuthenticationService
         }
     }
 
-    private function findUserByEmail(string $email): User|null
+    private function findUserByEmail(UserDTO $userDTO): User|null
     {
-        $user = $this->userRepository->findByEmail($email);
+        $user = $this->userRepository->findByEmail($userDTO->email);
         if(!$user){
-            Log::error("Usuario no encontrado: $email");
+            Log::error("Usuario no encontrado: $userDTO->email");
             throw new LoginException('Usuario no encontrado');
         }
 
@@ -85,18 +85,37 @@ class AuthenticationService
         return [
             'name' => $userDTO->name,
             'email' => $userDTO->email,
+            'password' => $userDTO->password,
             'phone' => $userDTO->phone,
             'address' => $userDTO->address,
             'date_of_birth' => $userDTO->date_of_birth,
             'profile_picture' => $userDTO->profile_picture,
             'bio' => $userDTO->bio,
             'created_at' => $userDTO->created_at,
+            'updated_at' => $userDTO->updated_at,
         ];
     }
 
-    private function createUser(array $userData): void
+    private function createUser(UserDTO $userDTO): null|array|object
     {
-        $this->userRepository->create($userData);
+        return $this->userRepository->create($this->convertDTOToArray($userDTO));
+    }
+
+    private function convertDTOToArray(UserDTO $userDTO): array
+    {
+        return [
+            'name' => $userDTO->name,
+            'email' => $userDTO->email,
+            'password' => $userDTO->password,
+            'phone' => $userDTO->phone,
+            'address' => $userDTO->address,
+            'date_of_birth' => $userDTO->date_of_birth,
+            'profile_picture' => $userDTO->profile_picture,
+            'bio' => $userDTO->bio,
+            'created_at' => $userDTO->created_at,
+            'updated_at' => $userDTO->updated_at,
+            'token' => $userDTO->token,
+        ];
     }
 
     private function handleRegistrationError(RegistrationException $e): void

@@ -5,7 +5,7 @@ namespace App\Http\Requests\Authentication;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Contracts\ValidatesRequestInterface;
 
-class LoginRequest extends FormRequest implements ValidatesRequestInterface
+class LoginRequest extends FormRequest
 {
     public function authorize()
     {
