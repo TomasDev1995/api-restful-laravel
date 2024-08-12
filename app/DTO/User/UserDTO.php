@@ -2,8 +2,6 @@
 
 namespace App\DTO\User;
 
-use MongoDB\BSON\UTCDateTime;
-
 class UserDTO
 {
     public ?string $name;
@@ -16,6 +14,7 @@ class UserDTO
     public ?string $bio;
     public  $created_at;
     public  $updated_at;
+    public ?string $token;
 
     public function __construct(
         ?string $name = null,
@@ -27,7 +26,8 @@ class UserDTO
         ?string $profile_picture = null,
         ?string $bio = null,
         $created_at = null,
-        $updated_at = null
+        $updated_at = null,
+        ?string $token = null
     ) {
         $this->name = $name;
         $this->email = $email;
@@ -39,14 +39,6 @@ class UserDTO
         $this->bio = $bio;
         $this->created_at = $created_at;
         $this->updated_at = $updated_at;
-    }
-
-    public static function setLoginData(string $email, string $password): self
-    {
-        return new self(
-            null,
-            $email,
-            $password
-        );
+        $this->token = $token;
     }
 }
