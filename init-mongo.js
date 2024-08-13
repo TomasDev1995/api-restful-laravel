@@ -1,4 +1,4 @@
-db = db.getSiblingDB('dicromo_db');
+db = db.getSiblingDB('api-laravel_db');
 
 // Crear colección de usuarios con campos detallados
 db.createCollection('users');
@@ -86,7 +86,7 @@ db.tasks.insertMany([
 
 // Crear un usuario de base de datos con roles
 db.createUser({
-  user: "dicromo",
-  pwd: "d1cr0m0",
-  roles: [{ role: "readWrite", db: "dicromo_db" }]
+  user: "api-laravel",
+  pwd: "4p1l4r4v3l",
+  roles: [{ role: "readWrite", db: "api-laravel_db" }]
 });

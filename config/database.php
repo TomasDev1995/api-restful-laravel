@@ -37,14 +37,14 @@ return [
 
         'mongodb' => [
             'driver'   => 'mongodb',
-            'dsn'      => env('DB_URI', 'mongodb://dicromo:d1cr0m0@host.docker.internal:27017/dicromo_db'),
+            'dsn'      => env('DB_URI', 'mongodb://api-laravel_db:d1cr0m0@host.docker.internal:27017/api-laravel_db_db'),
             'host'     => env('DB_HOST', '127.0.0.1'),
             'port'     => env('DB_PORT', 27017),
             'database' => env('DB_DATABASE'),
             'username' => env('DB_USERNAME'),
             'password' => env('DB_PASSWORD'),
             'options'  => [
-                'database' => env('DB_AUTHENTICATION_DATABASE', 'dicromo')
+                'database' => env('DB_AUTHENTICATION_DATABASE', 'api-laravel_db')
             ]
         ],
 

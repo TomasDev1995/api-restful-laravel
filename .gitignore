@@ -13,6 +13,6 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
-docker/apache/ssl
+/.docker
+init-mongo.js
 docker-compose.yml
-php
