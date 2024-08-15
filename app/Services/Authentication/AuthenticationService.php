@@ -7,10 +7,15 @@ namespace App\Services\Authentication;
 use App\Repositories\User\UserRepository;
 use App\Services\Security\PasswordHasher;
 use App\DTO\User\UserDTO;
+use App\Exceptions\Authentication\AuthenticationException;
 use App\Exceptions\Authentication\RegistrationException;
 use App\Exceptions\Authentication\LoginException;
+use App\Exceptions\Authentication\UserNotFoundException;
+use App\Exceptions\IncorrectPasswordException;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthenticationService
@@ -28,20 +33,19 @@ class AuthenticationService
     {
         try {
             return $this->createUser($userDTO); 
-        } catch (RegistrationException $e) {
+        } catch (Exception $e) {
             return $this->handleRegistrationError($e);
         }
     }
 
-    public function loginUser(UserDTO $userDTO)
+    public function authenticateUser(UserDTO $userDTO)
     {
         try {
             $user = $this->findUserByEmail($userDTO);
+            //dd($user->password." | ".$userDTO->password);
             $this->verifyPassword($userDTO->password, $user->password);
-            return [
-                "accessToken"=> $this->generateToken($userDTO),
-            ];
-        } catch (LoginException $e) {
+            return $this->generateToken($userDTO);
+        } catch (Exception $e) {
            return $this->handleLoginError($e);
         }
     }
@@ -51,7 +55,7 @@ class AuthenticationService
         $user = $this->userRepository->findByEmail($userDTO->email);
         if(!$user){
             Log::error("Usuario no encontrado: $userDTO->email");
-            throw new LoginException('Usuario no encontrado');
+            throw new Exception('Usuario no encontrado');
         }
 
         return $user;
@@ -62,7 +66,7 @@ class AuthenticationService
         $validated = $this->passwordHasher->check($password, $hashedPassword);
         if(!$validated){
             Log::error("Contraseña incorrecta.");
-            throw new LoginException('Contraseña incorrecta');
+            throw new Exception('Contraseña incorrecta');
         }
         
         return $validated;
@@ -74,30 +78,15 @@ class AuthenticationService
 
         if (!$token = JWTAuth::attempt($credentials)) {
             Log::error("Error al generar token de acceso");
-            throw new LoginException("Error al generar token de acceso");
+            throw new Exception("Error al generar token de acceso");
         }
         
         return $token; 
     }
 
-    private function mapUserDTOToDataArray(UserDTO $userDTO)
-    {
-        return [
-            'name' => $userDTO->name,
-            'email' => $userDTO->email,
-            'password' => $userDTO->password,
-            'phone' => $userDTO->phone,
-            'address' => $userDTO->address,
-            'date_of_birth' => $userDTO->date_of_birth,
-            'profile_picture' => $userDTO->profile_picture,
-            'bio' => $userDTO->bio,
-            'created_at' => $userDTO->created_at,
-            'updated_at' => $userDTO->updated_at,
-        ];
-    }
-
     private function createUser(UserDTO $userDTO): null|array|object
     {
+        $this->passwordHasher->hash($userDTO->password);
         return $this->userRepository->create($this->convertDTOToArray($userDTO));
     }
 
@@ -118,15 +107,15 @@ class AuthenticationService
         ];
     }
 
-    private function handleRegistrationError(RegistrationException $e): void
+    private function handleRegistrationError(Exception $e): void
     {
         Log::error("Error al registrar el usuario: " . $e->getMessage());
-        throw new RegistrationException("No se pudo registrar el usuario, por favor intente nuevamente.", 0, $e);
+        throw new Exception("No se pudo registrar el usuario, por favor intente nuevamente.", 0, $e);
     }
 
-    private function handleLoginError(LoginException $e): array
+    private function handleLoginError(Exception $e): array
     {
         Log::error("Error de autenticacion: " . $e->getMessage());
-        return ['error' => $e->getMessage()];
+        throw new Exception ($e->getMessage());
     }
 }

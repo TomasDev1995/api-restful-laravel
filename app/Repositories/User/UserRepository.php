@@ -65,9 +65,19 @@ class UserRepository
      * @param string $email
      * @return User|null
      */
-    public function findByEmail(string $email): User|null
+    public function findByEmail(string $email): ?User
     {
-        $user = json_decode(json_encode($this->collection->findOne(['email' => $email])), true);
-        return new User($user);
+        $userDocument = $this->collection->findOne(['email' => $email]);
+        
+        // Si no se encuentra el usuario, devolvemos null
+        if ($userDocument === null) {
+            return null;
+        }
+        
+        // Convertimos el documento a un array, si es necesario
+        $userArray = json_decode(json_encode($userDocument), true);
+        
+        // Creamos y devolvemos una instancia del modelo User
+        return new User($userArray);
     }
 }

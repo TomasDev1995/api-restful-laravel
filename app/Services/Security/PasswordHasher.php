@@ -25,7 +25,7 @@ class PasswordHasher
      * @return bool
      */
     public function check(string $password, string $hashedPassword): bool
-    {
+    {   
         return Hash::check($password, $hashedPassword);
     }
 }

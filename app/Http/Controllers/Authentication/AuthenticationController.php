@@ -13,7 +13,11 @@ use App\Exceptions\Authentication\RegistrationException;
 use App\Services\Authentication\AuthenticationService;
 
 use App\DTO\User\UserDTO;
+use App\Exceptions\Authentication\AuthenticationException;
+use App\Exceptions\Authentication\UserCreationException;
+use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Controlador responsable de la autenticación de usuarios.
@@ -52,7 +56,6 @@ class AuthenticationController extends Controller
         try {
             $validatedData = $registerRequest->validated();
             $validatedData['date_of_birth'] = $this->validateAndConvertDate($validatedData['date_of_birth'] ?? null);
-            
             $userDTO = $this->setUserDTO($validatedData);
             $userDocument = $this->authenticationService->registerUser($userDTO);
 
@@ -61,8 +64,11 @@ class AuthenticationController extends Controller
                 "code" => 201,
                 "resource" => new RegistratedUserResource($userDocument),
             ];
-        } catch (RegistrationException $e) {
-            return $this->handleRegistrationException($e, $registerRequest);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Error al registrar el usuario',
+                'details' => $e->getMessage()
+            ], 422);
         }
     }
     
@@ -76,15 +82,17 @@ class AuthenticationController extends Controller
     {
         try {
             $userDTO = $this->setUserDTO($loginRequest->validated());
-            $token = $this->authenticationService->loginUser($userDTO);
-            
+            $authenticatedUser = $this->authenticationService->authenticateUser($userDTO);
+
             return [
                 "message" => "Usuario autenticado",
                 "code" => 200,
-                "resource" => new AuthenticatedUserResource($userDTO->withToken($token->accessToken)),
+                "resource" => new AuthenticatedUserResource($authenticatedUser['accessToken']),
             ]; 
-        } catch (LoginException $e) {
-            return $this->handleLoginException($e, $loginRequest);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 422);
         }
     }
 
@@ -103,7 +111,7 @@ class AuthenticationController extends Controller
     }
 
     /**
-     * Crea un DTO de usuario a partir de los datos validados del registro.
+     * Crea un DTO de usuario a partir de los datos validados del registro/login.
      * 
      * @param array $validated Datos validados del registro.
      * @return UserDTO
@@ -122,29 +130,5 @@ class AuthenticationController extends Controller
             now()->format('d-m-Y H:i:s'),
             now()->format('d-m-Y H:i:s')
         );
-    }
-
-    /**
-     * Maneja las excepciones ocurridas durante el registro de un usuario.
-     * 
-     * @param RegistrationException $e
-     * @return \Illuminate\Http\JsonResponse
-     */
-    private function handleRegistrationException(RegistrationException $e)
-    {
-        Log::error("Error en el registro de usuario: " . $e->getMessage());
-        return response()->json(['error' => 'Registro fallido, por favor intente nuevamente.'], 500);
-    }
-
-    /**
-     * Maneja las excepciones ocurridas durante el inicio de sesión de un usuario.
-     * 
-     * @param LoginException $e
-     * @return \Illuminate\Http\JsonResponse
-     */
-    private function handleLoginException(LoginException $e)
-    {
-        Log::error("Error en el inicio de sesion del usuario: " . $e->getMessage());
-        return response()->json(['error' => 'Inicio de sesion fallido, por favor intente nuevamente.'], 500);
     }
 }
