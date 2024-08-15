@@ -25,7 +25,6 @@ class UserRepository
     public function create(array $userArray): BSONDocument|null
     {
         try {
-            
             $result = $this->collection->insertOne($userArray);
             if ($result->getInsertedCount() !== 1) {
                 Log::error('Error: El documento no se insertó correctamente.', [
@@ -63,21 +62,12 @@ class UserRepository
      * Encuentra un usuario por su email.
      *
      * @param string $email
-     * @return User|null
+     * @return \MongoDB\Model\BSONDocument|null
      */
-    public function findByEmail(string $email): ?User
+    public function findByEmail(string $email): ?BSONDocument
     {
         $userDocument = $this->collection->findOne(['email' => $email]);
         
-        // Si no se encuentra el usuario, devolvemos null
-        if ($userDocument === null) {
-            return null;
-        }
-        
-        // Convertimos el documento a un array, si es necesario
-        $userArray = json_decode(json_encode($userDocument), true);
-        
-        // Creamos y devolvemos una instancia del modelo User
-        return new User($userArray);
+        return $userDocument ?: null;
     }
 }

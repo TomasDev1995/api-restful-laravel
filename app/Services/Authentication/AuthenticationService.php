@@ -15,6 +15,8 @@ use App\Exceptions\IncorrectPasswordException;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use MongoDB\Model\BSONArray;
+use MongoDB\Model\BSONDocument;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -42,17 +44,20 @@ class AuthenticationService
     {
         try {
             $user = $this->findUserByEmail($userDTO);
-            //dd($user->password." | ".$userDTO->password);
-            $this->verifyPassword($userDTO->password, $user->password);
-            return $this->generateToken($userDTO);
+            $this->verifyPassword($userDTO->password, $user['password']);
+            return [
+                "user" => $user,
+                "accessToken" => $this->generateToken($userDTO),
+            ];
         } catch (Exception $e) {
            return $this->handleLoginError($e);
         }
     }
 
-    private function findUserByEmail(UserDTO $userDTO): User|null
+    private function findUserByEmail(UserDTO $userDTO): ?BSONDocument
     {
         $user = $this->userRepository->findByEmail($userDTO->email);
+        
         if(!$user){
             Log::error("Usuario no encontrado: $userDTO->email");
             throw new Exception('Usuario no encontrado');
@@ -74,19 +79,19 @@ class AuthenticationService
 
     private function generateToken(UserDTO $userDTO): string
     {
-        $credentials = ["email"=>$userDTO->email, "password"=>$userDTO->password];
+        $credentials = ["email" => $userDTO->email, "password" => $userDTO->password];
 
         if (!$token = JWTAuth::attempt($credentials)) {
             Log::error("Error al generar token de acceso");
             throw new Exception("Error al generar token de acceso");
         }
-        
-        return $token; 
+
+        return $token;
+
     }
 
     private function createUser(UserDTO $userDTO): null|array|object
     {
-        $this->passwordHasher->hash($userDTO->password);
         return $this->userRepository->create($this->convertDTOToArray($userDTO));
     }
 
@@ -95,7 +100,7 @@ class AuthenticationService
         return [
             'name' => $userDTO->name,
             'email' => $userDTO->email,
-            'password' => $userDTO->password,
+            'password' => $this->passwordHasher->hash($userDTO->password),
             'phone' => $userDTO->phone,
             'address' => $userDTO->address,
             'date_of_birth' => $userDTO->date_of_birth,

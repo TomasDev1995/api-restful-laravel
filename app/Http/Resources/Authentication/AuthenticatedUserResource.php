@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Authentication;
 
 use App\Http\Resources\User\UserResource;
+use App\Models\User;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class AuthenticatedUserResource extends JsonResource
@@ -16,9 +17,7 @@ class AuthenticatedUserResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'user' => new UserResource($this->resource['user']),
-            'token' => $this->token,
-            //Aca podriamos definir roles.
+            'authenticated_user' => new UserResource($this->resource),
         ];
     }
 }

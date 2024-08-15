@@ -2,8 +2,6 @@
 
 namespace App\DTO\User;
 
-use Illuminate\Support\Facades\Hash;
-
 class UserDTO
 {
     public ?string $name;

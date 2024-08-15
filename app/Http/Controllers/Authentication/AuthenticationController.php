@@ -59,11 +59,11 @@ class AuthenticationController extends Controller
             $userDTO = $this->setUserDTO($validatedData);
             $userDocument = $this->authenticationService->registerUser($userDTO);
 
-            return [
+            return response()->json([
                 "message" => "Usuario registrado",
                 "code" => 201,
                 "resource" => new RegistratedUserResource($userDocument),
-            ];
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Error al registrar el usuario',
@@ -84,11 +84,12 @@ class AuthenticationController extends Controller
             $userDTO = $this->setUserDTO($loginRequest->validated());
             $authenticatedUser = $this->authenticationService->authenticateUser($userDTO);
 
-            return [
+            return response()->json([
                 "message" => "Usuario autenticado",
                 "code" => 200,
-                "resource" => new AuthenticatedUserResource($authenticatedUser['accessToken']),
-            ]; 
+                "resource" => new AuthenticatedUserResource($authenticatedUser["user"]),
+                "access_token" => $authenticatedUser["accessToken"]
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage(),
