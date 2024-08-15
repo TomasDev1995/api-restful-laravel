@@ -22,41 +22,32 @@ class UserRepository
         $this->collection = $mongoDBConnectionService->getCollection('users');
     }
 
-    public function create(array $userArray): BSONDocument|null
+    public function create(array $userArray): BSONDocument
     {
         try {
             $result = $this->collection->insertOne($userArray);
+    
             if ($result->getInsertedCount() !== 1) {
-                Log::error('Error: El documento no se insertó correctamente.', [
-                    'user_data' => $userArray
-                ]);
-                return null;
+                throw new \RuntimeException('El documento no se insertó correctamente.');
             }
-
-            $insertedId = $result->getInsertedId();
-            $insertedDocument = $this->collection->findOne(['_id' => $insertedId]);
-
-            return $insertedDocument;
-        } catch (\InvalidArgumentException $e) {
-            Log::error('Argumento inválido al insertar el usuario en MongoDB', [
+    
+            return $this->collection->findOne(['_id' => $result->getInsertedId()]);
+    
+        } catch (Exception $e) {
+            Log::error('Error al insertar el usuario en MongoDB', [
                 'error' => $e->getMessage(),
                 'user_data' => $userArray
             ]);
-            return null;
-        } catch (\RuntimeException $e) {
-            Log::error('Error en tiempo de ejecución al insertar el usuario en MongoDB', [
-                'error' => $e->getMessage(),
-                'user_data' => $userArray
-            ]);
-            return null;
+            throw new \RuntimeException('Error en la operación de MongoDB.');
         } catch (\Exception $e) {
             Log::error('Error desconocido al insertar el usuario en MongoDB', [
                 'error' => $e->getMessage(),
                 'user_data' => $userArray
             ]);
-            return null;
+            throw new \RuntimeException('Error inesperado al insertar el usuario.');
         }
     }
+    
 
     /**
      * Encuentra un usuario por su email.

@@ -3,21 +3,14 @@
 namespace App\Http\Controllers\Authentication;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\ApiResponseTrait;
 use App\Http\Requests\Authentication\LoginRequest;
 use App\Http\Requests\Authentication\RegisterRequest;
 use App\Http\Resources\Authentication\RegistratedUserResource ;
 use App\Http\Resources\Authentication\AuthenticatedUserResource ;
-use App\Exceptions\Authentication\LoginException;
-use App\Exceptions\Authentication\RegistrationException;
-
 use App\Services\Authentication\AuthenticationService;
-
 use App\DTO\User\UserDTO;
-use App\Exceptions\Authentication\AuthenticationException;
-use App\Exceptions\Authentication\UserCreationException;
 use Exception;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Controlador responsable de la autenticación de usuarios.
@@ -25,6 +18,9 @@ use Illuminate\Validation\ValidationException;
  */
 class AuthenticationController extends Controller
 {
+
+    use ApiResponseTrait;
+
     /**
      * Servicio de autenticación que contiene la lógica principal.
      *
@@ -59,16 +55,9 @@ class AuthenticationController extends Controller
             $userDTO = $this->setUserDTO($validatedData);
             $userDocument = $this->authenticationService->registerUser($userDTO);
 
-            return response()->json([
-                "message" => "Usuario registrado",
-                "code" => 201,
-                "resource" => new RegistratedUserResource($userDocument),
-            ]);
+            return $this->successResponse("Usuario registrado", new RegistratedUserResource($userDocument), 201);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Error al registrar el usuario',
-                'details' => $e->getMessage()
-            ], 422);
+            return $this->errorResponse('Error al registrar el usuario', $e->getMessage());
         }
     }
     
@@ -84,16 +73,12 @@ class AuthenticationController extends Controller
             $userDTO = $this->setUserDTO($loginRequest->validated());
             $authenticatedUser = $this->authenticationService->authenticateUser($userDTO);
 
-            return response()->json([
-                "message" => "Usuario autenticado",
-                "code" => 200,
-                "resource" => new AuthenticatedUserResource($authenticatedUser["user"]),
-                "access_token" => $authenticatedUser["accessToken"]
-            ], 200);
+            return $this->successResponse("Usuario autenticado", [
+                'user' => new AuthenticatedUserResource($authenticatedUser["user"]),
+                'access_token' => $authenticatedUser["accessToken"]
+            ]);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-            ], 422);
+            return $this->errorResponse('Error al autenticar el usuario', $e->getMessage());
         }
     }
 
