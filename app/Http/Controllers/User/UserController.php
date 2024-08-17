@@ -3,54 +3,67 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Services\Database\MongoDBConnectionService;
+use App\Http\Controllers\Traits\ApiResponseTrait;
+use App\Http\Resources\User\UserCollection;
+use App\Http\Resources\User\UserResource;
+use App\Services\User\UserService;
 use Illuminate\Http\Request;
-use MongoDB\Client as MongoClient;
 
 class UserController extends Controller
 {
-    protected $client;
-    protected $collection;
+    use ApiResponseTrait;
 
-    public function __construct(MongoDBConnectionService $mongoDBConnectionService)
+    protected $userService;
+
+    public function __construct(UserService $userService)
     {
-        $this->collection = $mongoDBConnectionService->getCollection('users');
+        $this->userService = $userService;
     }
 
     public function index()
     {
-        $usersCursor = $this->collection->find();
-        
-        // Convertir el cursor a un array
-        $users = $usersCursor->toArray();
-        
-        // Devolver la respuesta JSON
-        return response()->json($users);
+        try {
+            $users = $this->userService->getAllUsers();
+
+            if (!is_array($users)) {
+                return $this->errorResponse('Formato de datos incorrecto.', 'La respuesta del servicio no es un array.');
+            }
+            
+            return $this->successResponse(new UserCollection($users));
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error al obtener todos los usuarios.', $e->getMessage());
+
+        }
     }
 
     public function show($id)
     {
-        $user = $this->collection->findOne(['_id' => new \MongoDB\BSON\ObjectId($id)]);
-        return response()->json($user);
+        try {
+            $user = $this->userService->getUserById($id);
+
+            if (!$user) {
+                return $this->errorResponse('No existe el usuario.');
+            }
+            
+            return $this->successResponse(new UserResource($user));
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error al obtener el usuario.', $e->getMessage());
+
+        }
     }
 
     public function store(Request $request)
     {
-        $data = $request->all();
-        $this->collection->insertOne($data);
-        return response()->json(['message' => 'User created successfully']);
+
     }
 
     public function update(Request $request, $id)
     {
-        $data = $request->all();
-        $this->collection->updateOne(['_id' => new \MongoDB\BSON\ObjectId($id)], ['$set' => $data]);
-        return response()->json(['message' => 'User updated successfully']);
+
     }
 
     public function destroy($id)
     {
-        $this->collection->deleteOne(['_id' => new \MongoDB\BSON\ObjectId($id)]);
-        return response()->json(['message' => 'User deleted successfully']);
+
     }
 }

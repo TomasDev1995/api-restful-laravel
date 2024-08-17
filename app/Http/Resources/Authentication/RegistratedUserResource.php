@@ -15,7 +15,7 @@ class RegistratedUserResource extends JsonResource
     public function toArray($request)
     {
         return [
-            "registrated_user" => new UserResource($this->resource),
+            "data" => new UserResource($this->resource),
         ];
     }
 }

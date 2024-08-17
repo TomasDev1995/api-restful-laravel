@@ -11,6 +11,7 @@ use App\Http\Resources\Authentication\AuthenticatedUserResource ;
 use App\Services\Authentication\AuthenticationService;
 use App\DTO\User\UserDTO;
 use Exception;
+use MongoDB\Model\BSONDocument;
 
 /**
  * Controlador responsable de la autenticación de usuarios.
@@ -52,10 +53,11 @@ class AuthenticationController extends Controller
         try {
             $validatedData = $registerRequest->validated();
             $validatedData['date_of_birth'] = $this->validateAndConvertDate($validatedData['date_of_birth'] ?? null);
+            
             $userDTO = $this->setUserDTO($validatedData);
             $userDocument = $this->authenticationService->registerUser($userDTO);
-
-            return $this->successResponse("Usuario registrado", new RegistratedUserResource($userDocument), 201);
+            
+            return $this->successResponse(new RegistratedUserResource($userDocument), 201);
         } catch (Exception $e) {
             return $this->errorResponse('Error al registrar el usuario', $e->getMessage());
         }
@@ -73,7 +75,11 @@ class AuthenticationController extends Controller
             $userDTO = $this->setUserDTO($loginRequest->validated());
             $authenticatedUser = $this->authenticationService->authenticateUser($userDTO);
 
-            return $this->successResponse("Usuario autenticado", [
+            if (!$authenticatedUser) {
+                return $this->errorResponse('Error al loguear el usuario', 'No se encontró ningún documento con el email proporcionado.');
+            }
+
+            return $this->successResponse([
                 'user' => new AuthenticatedUserResource($authenticatedUser["user"]),
                 'access_token' => $authenticatedUser["accessToken"]
             ]);

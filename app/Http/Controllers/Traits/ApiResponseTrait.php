@@ -14,12 +14,11 @@ trait ApiResponseTrait
      * @param int $statusCode
      * @return JsonResponse
      */
-    public function successResponse(string $message, $resource = null, int $statusCode = 200): JsonResponse
+    public function successResponse($resource = null, int $statusCode = 200): JsonResponse
     {
         return response()->json([
-            'message' => $message,
             'code' => $statusCode,
-            'resource' => $resource
+            'data' => $resource
         ], $statusCode);
     }
 
