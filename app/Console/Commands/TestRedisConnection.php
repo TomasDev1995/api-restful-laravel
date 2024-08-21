@@ -52,14 +52,20 @@ class TestRedisConnection extends Command
      */
     protected function listQueues($redis)
     {
-        // Redis usa listas para almacenar trabajos en cola. Generalmente, las colas están
-        // precedidas por el prefijo de la conexión, por ejemplo, "queues:default".
-        // Puedes ajustar el patrón según el prefijo que uses.
-        $pattern = 'APILaravel_database_queues:*'; // El patrón de búsqueda para las claves de cola.
-        $keys = $redis->keys($pattern);
+        // Utiliza un patrón más general para buscar las claves de cola
+        $iterator = null;
+        $queues = [];
+        $pattern = 'redis:queues:*';
 
-        return array_map(function ($key) {
-            return str_replace('queues:', '', $key);
-        }, $keys);
+        do {
+            list($iterator, $keys) = $redis->scan($iterator, $pattern);
+            foreach ($keys as $key) {
+                // Extrae el nombre de la cola eliminando el prefijo 'queues:'
+                $queues[] = str_replace('queues:', '', $key);
+            }
+        } while ($iterator);
+
+        return $queues;
     }
+
 }
