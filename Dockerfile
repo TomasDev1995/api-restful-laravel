@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y \
     git \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
+    
+# Instalar la extensión redis para PHP
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
 # Instalar la extensión de MongoDB
 RUN pecl install mongodb \
@@ -34,7 +38,7 @@ RUN chmod -R 777 /var/www/html
 
 # Establece los permisos específicos para storage y cache
 RUN chmod -R 777 /var/www/html/storage 
-    
+
 # Copia el archivo de configuración de Apache
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/apache/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf

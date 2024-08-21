@@ -27,6 +27,11 @@ class UserService
         return $users;
     }
 
+    public function createUser()
+    {
+        //
+    }
+
     public function getUserById($id)
     {
         return $this->userRepository->getUserById($id);

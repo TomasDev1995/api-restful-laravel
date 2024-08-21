@@ -36,6 +36,11 @@ class UserController extends Controller
         }
     }
 
+    public function create()
+    {
+        //
+    }
+
     public function show($id)
     {
         try {
@@ -52,18 +57,14 @@ class UserController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function update(
+        $id)
     {
-
-    }
-
-    public function update(Request $request, $id)
-    {
-
+        //
     }
 
     public function destroy($id)
     {
-
+        //
     }
 }
