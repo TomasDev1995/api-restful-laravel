@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\UserController as V1UserController;
 use App\Http\Controllers\Task\TaskController as V1TaskController;
@@ -18,7 +17,6 @@ use App\Http\Controllers\Authentication\AuthenticationController as V1Authentica
 */
 
 Route::prefix('v1')->group(function () {
-    // Rutas de autenticación
     Route::post('/register', [V1AuthenticationController::class, 'register']);
     Route::post('/login', [V1AuthenticationController::class, 'login']);
 

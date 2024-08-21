@@ -27,7 +27,7 @@ class UserRepository
                 'error' => $e->getMessage(),
                 'user_data' => $userArray
             ]);
-            throw new \RuntimeException('Error al insertar el usuario en MongoDB.', 0, $e->getMessage());
+            throw new MongoDBRuntimeException('Error al insertar el usuario en MongoDB.', 0, $e->getMessage());
         }
     }
 

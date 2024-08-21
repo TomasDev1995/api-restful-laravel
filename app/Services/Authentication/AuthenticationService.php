@@ -209,6 +209,6 @@ class AuthenticationService
      */
     private function sendWelcomeNotification(User $user): void
     {
-        SendWelcomeEmail::dispatch($user)->onConnection('redis');
+        SendWelcomeEmail::dispatch($user)->onConnection('redis')->onQueue('test');
     }
 }
